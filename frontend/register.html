@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — SPVI Dev Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen">
+  <div class="bg-gray-800 p-8 rounded-xl shadow-xl w-full max-w-sm">
+    <h1 class="text-white text-2xl font-bold mb-2 text-center">➕ Register User</h1>
+    <p class="text-gray-400 text-sm text-center mb-6">Admin only</p>
+    <div id="error" class="hidden bg-red-500 text-white p-3 rounded mb-4 text-sm"></div>
+    <div id="success" class="hidden bg-green-500 text-white p-3 rounded mb-4 text-sm"></div>
+    <form id="registerForm">
+      <div class="mb-4">
+        <label class="text-gray-400 text-sm mb-1 block">Username</label>
+        <input id="username" type="text" class="w-full bg-gray-700 text-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-4">
+        <label class="text-gray-400 text-sm mb-1 block">Password</label>
+        <input id="password" type="password" class="w-full bg-gray-700 text-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+      </div>
+      <div class="mb-6">
+        <label class="text-gray-400 text-sm mb-1 block">Role</label>
+        <select id="role" class="w-full bg-gray-700 text-white p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="readonly">👁️ Read-only (ดูอย่างเดียว)</option>
+          <option value="admin">⚡ Admin (ทำ action ได้)</option>
+        </select>
+      </div>
+      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mb-3">Create User</button>
+      <a href="dashboard.html" class="block text-center text-gray-400 hover:text-white text-sm">← Back to Dashboard</a>
+    </form>
+  </div>
+  <script>
+    const API = 'https://wrh5tot0a8.execute-api.ap-southeast-1.amazonaws.com/prod';
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (!token || role !== 'admin') { alert('Admin only'); window.location.href = 'index.html'; }
+
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const res = await fetch(API + '/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          username: document.getElementById('username').value,
+          password: document.getElementById('password').value,
+          role: document.getElementById('role').value
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        document.getElementById('success').textContent = 'User created successfully!';
+        document.getElementById('success').classList.remove('hidden');
+        document.getElementById('error').classList.add('hidden');
+        document.getElementById('registerForm').reset();
+      } else {
+        document.getElementById('error').textContent = data.error;
+        document.getElementById('error').classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users — SPVI Dev Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <nav class="bg-gray-800 px-6 py-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">👥 User Management</h1>
+    <div class="flex gap-3">
+      <a href="register.html" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm">➕ Add User</a>
+      <a href="dashboard.html" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded text-sm">← Dashboard</a>
+    </div>
+  </nav>
+
+  <div class="p-6 max-w-3xl mx-auto">
+    <div id="msg" class="hidden p-3 rounded mb-4 text-sm"></div>
+    <div id="userTable" class="bg-gray-800 rounded-xl overflow-hidden">
+      <div class="p-4 text-gray-400">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'https://wrh5tot0a8.execute-api.ap-southeast-1.amazonaws.com/prod';
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    if (!token || role !== 'admin') { alert('Admin only'); window.location.href = 'index.html'; }
+
+    function showMsg(text, ok = true) {
+      const el = document.getElementById('msg');
+      el.textContent = text;
+      el.className = `p-3 rounded mb-4 text-sm ${ok ? 'bg-green-600' : 'bg-red-600'}`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    async function loadUsers() {
+      const res = await fetch(API + '/users', { headers: { Authorization: `Bearer ${token}` } });
+      const users = await res.json();
+      document.getElementById('userTable').innerHTML = `
+        <table class="w-full text-sm">
+          <thead><tr class="text-gray-400 border-b border-gray-700">
+            <th class="p-3 text-left">Username</th>
+            <th class="p-3 text-left">Role</th>
+            <th class="p-3 text-left">Actions</th>
+          </tr></thead>
+          <tbody>${users.map(u => `
+            <tr class="border-b border-gray-700" id="row-${u.username}">
+              <td class="p-3 font-medium">${u.username}</td>
+              <td class="p-3">
+                <select onchange="updateRole('${u.username}', this.value)" class="bg-gray-700 text-white px-2 py-1 rounded text-xs">
+                  <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>⚡ Admin</option>
+                  <option value="readonly" ${u.role === 'readonly' ? 'selected' : ''}>👁️ Read-only</option>
+                </select>
+              </td>
+              <td class="p-3 flex gap-2">
+                <button onclick="changePassword('${u.username}')" class="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded">🔑 Password</button>
+                <button onclick="deleteUser('${u.username}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded">🗑️ Delete</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function updateRole(username, role) {
+      const res = await fetch(API + '/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username, role })
+      });
+      const data = await res.json();
+      showMsg(data.ok ? `Updated ${username} role` : data.error, data.ok);
+    }
+
+    async function changePassword(username) {
+      const pw = prompt(`New password for ${username}:`);
+      if (!pw) return;
+      const res = await fetch(API + '/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username, password: pw })
+      });
+      const data = await res.json();
+      showMsg(data.ok ? `Password updated for ${username}` : data.error, data.ok);
+    }
+
+    async function deleteUser(username) {
+      if (!confirm(`Delete user "${username}"?`)) return;
+      const res = await fetch(API + '/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ username })
+      });
+      const data = await res.json();
+      showMsg(data.ok ? `Deleted ${username}` : data.error, data.ok);
+      if (data.ok) loadUsers();
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
