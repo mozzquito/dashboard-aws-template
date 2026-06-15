@@ -99,7 +99,7 @@ resource "aws_s3_bucket" "frontend" {
 }
 ```
 
-> ⚠️ ชื่อ bucket **ต้องตรงกับ** domain ที่จะชี้มา เช่น `spvi-prod.harmonyx.works`
+> ⚠️ ชื่อ bucket **ต้องตรงกับ** domain ที่จะชี้มา เช่น `Project-Prod.harmonyx.works`
 
 ---
 
