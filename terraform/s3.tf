@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "YOUR_CUSTOM_DOMAIN"               # แก้ตรงนี้ เช่น spvi-prod.harmonyx.works
+  bucket        = "YOUR_CUSTOM_DOMAIN"               # แก้ตรงนี้ เช่น xxx.xxx.com / xxx.xxx.work
   force_destroy = true
   tags          = { Name = "YOUR_CUSTOM_DOMAIN" }    # แก้ตรงนี้
 }
