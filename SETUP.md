@@ -47,6 +47,18 @@ dashboard-aws-template/
 
 ---
 
+## Checklist สิ่งที่ต้องแก้เมื่อ copy template
+
+| ไฟล์ | ค่าที่ต้องแก้ |
+|------|--------------|
+| `terraform/main.tf` | `YOUR_PROJECT_NAME`, `YOUR_ACCOUNT_ID`, `YOUR_AWS_PROFILE`, `YOUR_TERRAFORM_STATE_BUCKET` |
+| `terraform/s3.tf` | `YOUR_CUSTOM_DOMAIN` |
+| `terraform/lambda.tf` | `ECS_CLUSTERS`, `EC2_IDS`, `RDS_CLUSTER` |
+| `frontend/dashboard.html` | `YOUR_ACCOUNT_ID` (บรรทัด navbar) |
+| `frontend/js/api.js` | `YOUR_API_GW_ID` (ได้หลัง `terraform apply`) |
+
+---
+
 ## Setup ใหม่ (Step by Step)
 
 ### ขั้นตอนที่ 1 — Copy template

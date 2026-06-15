@@ -29,7 +29,7 @@
         </div>
         <div>
           <h1 class="text-lg font-bold">SPVI Dashboard</h1>
-          <p class="text-xs text-gray-400">680466904119 • ap-southeast-1</p>
+          <p class="text-xs text-gray-400">YOUR_ACCOUNT_ID • ap-southeast-1</p>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -98,6 +98,50 @@
         <span class="ml-auto text-gray-400 transition-transform" id="codebuildArrow">▼</span>
       </div>
       <div id="codebuildTable" class="p-4 text-gray-400 text-sm">Loading...</div>
+    </section>
+
+    <!-- CloudWatch Alarms -->
+    <section class="card bg-gray-900/60 backdrop-blur border border-gray-700/30 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-700/30 flex items-center gap-3 cursor-pointer" onclick="toggle('alarms')">
+        <div class="w-8 h-8 bg-red-500/20 rounded-lg flex items-center justify-center text-sm">🔔</div>
+        <h2 class="font-semibold">CloudWatch Alarms</h2>
+        <span id="alarmsCount" class="text-xs bg-gray-700/50 px-2 py-0.5 rounded-full text-gray-400"></span>
+        <span class="ml-auto text-gray-400 transition-transform" id="alarmsArrow">▼</span>
+      </div>
+      <div id="alarmsTable" class="p-4 text-gray-400 text-sm">Loading...</div>
+    </section>
+
+    <!-- S3 Bucket Sizes -->
+    <section class="card bg-gray-900/60 backdrop-blur border border-gray-700/30 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-700/30 flex items-center gap-3 cursor-pointer" onclick="toggle('s3sizes')">
+        <div class="w-8 h-8 bg-cyan-500/20 rounded-lg flex items-center justify-center text-sm">🪣</div>
+        <h2 class="font-semibold">S3 Bucket Sizes</h2>
+        <span id="s3sizesCount" class="text-xs bg-gray-700/50 px-2 py-0.5 rounded-full text-gray-400"></span>
+        <span class="ml-auto text-gray-400 transition-transform" id="s3sizesArrow">▼</span>
+      </div>
+      <div id="s3sizesTable" class="p-4 text-gray-400 text-sm">Loading...</div>
+    </section>
+
+    <!-- Cost Explorer -->
+    <section class="card bg-gray-900/60 backdrop-blur border border-gray-700/30 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-700/30 flex items-center gap-3 cursor-pointer" onclick="toggle('cost')">
+        <div class="w-8 h-8 bg-emerald-500/20 rounded-lg flex items-center justify-center text-sm">💰</div>
+        <h2 class="font-semibold">Cost Explorer</h2>
+        <span id="costCount" class="text-xs bg-gray-700/50 px-2 py-0.5 rounded-full text-gray-400"></span>
+        <span class="ml-auto text-gray-400 transition-transform" id="costArrow">▼</span>
+      </div>
+      <div id="costTable" class="p-4 text-gray-400 text-sm">Loading...</div>
+    </section>
+
+    <!-- ECR Images -->
+    <section class="card bg-gray-900/60 backdrop-blur border border-gray-700/30 rounded-2xl overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-700/30 flex items-center gap-3 cursor-pointer" onclick="toggle('ecr')">
+        <div class="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center text-sm">📦</div>
+        <h2 class="font-semibold">ECR Images</h2>
+        <span id="ecrCount" class="text-xs bg-gray-700/50 px-2 py-0.5 rounded-full text-gray-400"></span>
+        <span class="ml-auto text-gray-400 transition-transform" id="ecrArrow">▼</span>
+      </div>
+      <div id="ecrTable" class="p-4 text-gray-400 text-sm">Loading...</div>
     </section>
   </div>
 

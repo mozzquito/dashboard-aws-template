@@ -214,6 +214,79 @@ async function startBuild(project) {
 
 loadCodeBuild();
 
+async function loadAlarms() {
+  const alarms = await apiCall('/cloudwatch/alarms');
+  document.getElementById('alarmsCount').textContent = `${alarms.length} alarms`;
+  const alarmColor = { OK: 'text-emerald-400', ALARM: 'text-red-400', INSUFFICIENT_DATA: 'text-amber-400' };
+  document.getElementById('alarmsTable').innerHTML = alarms.length === 0
+    ? '<p class="text-gray-500">No alarms</p>'
+    : `<table class="w-full text-sm">
+      <thead><tr class="text-gray-500 text-xs uppercase tracking-wider">
+        <th class="px-6 py-3 text-left">Name</th><th class="px-6 py-3 text-left">State</th><th class="px-6 py-3 text-left">Metric</th><th class="px-6 py-3 text-left">Reason</th>
+      </tr></thead>
+      <tbody>${alarms.map(a => `<tr class="table-row border-t border-gray-800/50">
+        <td class="px-6 py-3 font-medium text-xs">${a.name}</td>
+        <td class="px-6 py-3 font-bold ${alarmColor[a.state] || 'text-gray-400'}">${a.state}</td>
+        <td class="px-6 py-3 text-gray-400 text-xs">${a.namespace}/${a.metric}</td>
+        <td class="px-6 py-3 text-gray-500 text-xs truncate max-w-xs">${a.reason}</td>
+      </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadS3Sizes() {
+  const buckets = await apiCall('/s3/sizes');
+  document.getElementById('s3sizesCount').textContent = `${buckets.length} buckets`;
+  const fmt = b => b >= 1e9 ? `${(b/1e9).toFixed(2)} GB` : b >= 1e6 ? `${(b/1e6).toFixed(2)} MB` : b >= 1e3 ? `${(b/1e3).toFixed(2)} KB` : `${b} B`;
+  const sorted = [...buckets].sort((a, b) => b.bytes - a.bytes);
+  document.getElementById('s3sizesTable').innerHTML = `<table class="w-full text-sm">
+    <thead><tr class="text-gray-500 text-xs uppercase tracking-wider">
+      <th class="px-6 py-3 text-left">Bucket</th><th class="px-6 py-3 text-right">Size</th>
+    </tr></thead>
+    <tbody>${sorted.map(b => `<tr class="table-row border-t border-gray-800/50">
+      <td class="px-6 py-3 font-mono text-xs">${b.name}</td>
+      <td class="px-6 py-3 text-right text-gray-300">${b.bytes > 0 ? fmt(b.bytes) : '<span class="text-gray-600">—</span>'}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+async function loadCost() {
+  const data = await apiCall('/cost/monthly');
+  if (data.error) { document.getElementById('costTable').innerHTML = `<p class="text-red-400">${data.error}</p>`; return; }
+  document.getElementById('costCount').textContent = `$${data.total} USD`;
+  const max = data.services[0]?.amount || 1;
+  document.getElementById('costTable').innerHTML = `
+    <div class="px-6 py-3 text-xs text-gray-500">Period: ${data.period}</div>
+    <table class="w-full text-sm">
+      <thead><tr class="text-gray-500 text-xs uppercase tracking-wider">
+        <th class="px-6 py-3 text-left">Service</th><th class="px-6 py-3 text-right">Cost (USD)</th><th class="px-6 py-3"></th>
+      </tr></thead>
+      <tbody>${data.services.map(s => `<tr class="table-row border-t border-gray-800/50">
+        <td class="px-6 py-3 text-xs">${s.service}</td>
+        <td class="px-6 py-3 text-right font-mono text-emerald-300">$${s.amount.toFixed(4)}</td>
+        <td class="px-6 py-3 w-32"><div class="h-1.5 bg-emerald-500/20 rounded-full"><div class="h-1.5 bg-emerald-500 rounded-full" style="width:${Math.round(s.amount/max*100)}%"></div></div></td>
+      </tr>`).join('')}
+      <tr class="border-t-2 border-gray-700"><td class="px-6 py-3 font-bold">Total</td><td class="px-6 py-3 text-right font-bold text-emerald-300">$${data.total}</td><td></td></tr>
+      </tbody></table>`;
+}
+
+async function loadECR() {
+  const repos = await apiCall('/ecr/images');
+  document.getElementById('ecrCount').textContent = `${repos.length} repos`;
+  document.getElementById('ecrTable').innerHTML = `<table class="w-full text-sm">
+    <thead><tr class="text-gray-500 text-xs uppercase tracking-wider">
+      <th class="px-6 py-3 text-left">Repository</th><th class="px-6 py-3 text-left">Latest Tags</th><th class="px-6 py-3 text-left">Pushed</th><th class="px-6 py-3 text-right">Size</th>
+    </tr></thead>
+    <tbody>${repos.map(r => `<tr class="table-row border-t border-gray-800/50">
+      <td class="px-6 py-3 font-mono text-xs">${r.repo}</td>
+      <td class="px-6 py-3">${r.tags.map(t => `<span class="text-xs bg-orange-500/20 text-orange-300 border border-orange-500/30 px-2 py-0.5 rounded-full mr-1">${t}</span>`).join('') || '<span class="text-gray-600">—</span>'}</td>
+      <td class="px-6 py-3 text-gray-400 text-xs">${r.pushedAt ? new Date(r.pushedAt).toLocaleString('th-TH') : '—'}</td>
+      <td class="px-6 py-3 text-right text-gray-400 text-xs">${r.sizeMB > 0 ? r.sizeMB + ' MB' : '—'}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+loadAlarms();
+loadS3Sizes();
+loadCost();
+loadECR();
+
 if (IS_ADMIN) {
   document.getElementById('registerLink').innerHTML =
     '<a href="register.html" class="bg-gray-800 hover:bg-gray-700 border border-gray-700/50 px-4 py-2 rounded-lg text-sm transition-all">+ User</a>' +

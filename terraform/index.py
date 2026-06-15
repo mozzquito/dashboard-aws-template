@@ -21,6 +21,11 @@ rds = boto3.client("rds", region_name=REGION)
 lmb = boto3.client("lambda", region_name=REGION)
 ssm = boto3.client("ssm", region_name=REGION)
 cb = boto3.client("codebuild", region_name=REGION)
+cw = boto3.client("cloudwatch", region_name=REGION)
+s3c = boto3.client("s3", region_name=REGION)
+s3r = boto3.resource("s3")
+ce = boto3.client("ce", region_name="us-east-1")
+ecr = boto3.client("ecr", region_name=REGION)
 
 
 def hash_pw(pw):
@@ -240,5 +245,80 @@ def handler(event, context):
         body = json.loads(event.get("body") or "{}")
         resp = cb.start_build(projectName=body["project"])
         return cors({"buildId": resp["build"]["id"]})
+
+    if path == "/cloudwatch/alarms" and method == "GET":
+        alarms = cw.describe_alarms()["MetricAlarms"]
+        return cors([{
+            "name": a["AlarmName"],
+            "state": a["StateValue"],
+            "metric": a["MetricName"],
+            "namespace": a["Namespace"],
+            "reason": a.get("StateReason", ""),
+        } for a in alarms])
+
+    if path == "/s3/sizes" and method == "GET":
+        buckets = s3c.list_buckets()["Buckets"]
+        result = []
+        for b in buckets:
+            name = b["Name"]
+            try:
+                size = cw.get_metric_statistics(
+                    Namespace="AWS/S3",
+                    MetricName="BucketSizeBytes",
+                    Dimensions=[
+                        {"Name": "BucketName", "Value": name},
+                        {"Name": "StorageType", "Value": "StandardStorage"},
+                    ],
+                    StartTime=__import__("datetime").datetime.utcnow() - __import__("datetime").timedelta(days=2),
+                    EndTime=__import__("datetime").datetime.utcnow(),
+                    Period=86400,
+                    Statistics=["Average"],
+                )
+                dp = size.get("Datapoints", [])
+                bytes_val = int(dp[-1]["Average"]) if dp else 0
+            except Exception:
+                bytes_val = 0
+            result.append({"name": name, "bytes": bytes_val})
+        return cors(result)
+
+    if path == "/cost/monthly" and method == "GET":
+        import datetime
+        today = datetime.date.today()
+        start = today.replace(day=1).isoformat()
+        end = today.isoformat()
+        resp = ce.get_cost_and_usage(
+            TimePeriod={"Start": start, "End": end},
+            Granularity="MONTHLY",
+            Metrics=["UnblendedCost"],
+            GroupBy=[{"Type": "DIMENSION", "Key": "SERVICE"}],
+        )
+        results = resp.get("ResultsByTime", [{}])[0].get("Groups", [])
+        total = sum(float(g["Metrics"]["UnblendedCost"]["Amount"]) for g in results)
+        services = sorted(
+            [{"service": g["Keys"][0], "amount": float(g["Metrics"]["UnblendedCost"]["Amount"])} for g in results],
+            key=lambda x: x["amount"], reverse=True
+        )
+        return cors({"total": round(total, 2), "currency": "USD", "period": f"{start} → {end}", "services": services[:15]})
+
+    if path == "/ecr/images" and method == "GET":
+        repos = ecr.describe_repositories()["repositories"]
+        result = []
+        for r in repos:
+            try:
+                images = ecr.describe_images(
+                    repositoryName=r["repositoryName"],
+                    filter={"tagStatus": "TAGGED"},
+                )["imageDetails"]
+                images.sort(key=lambda x: x.get("imagePushedAt", ""), reverse=True)
+                latest = images[:3] if images else []
+                result.append({
+                    "repo": r["repositoryName"],
+                    "tags": [t for img in latest for t in img.get("imageTags", [])],
+                    "pushedAt": str(latest[0].get("imagePushedAt", "")) if latest else "",
+                    "sizeMB": round(latest[0].get("imageSizeInBytes", 0) / 1024 / 1024, 1) if latest else 0,
+                })
+            except Exception:
+                result.append({"repo": r["repositoryName"], "tags": [], "pushedAt": "", "sizeMB": 0})
+        return cors(result)
 
     return cors({"error": "Not found"}, 404)

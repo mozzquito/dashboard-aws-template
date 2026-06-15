@@ -18,6 +18,10 @@ resource "aws_iam_role_policy" "lambda" {
       { Effect = "Allow", Action = ["rds:DescribeDBClusters", "rds:StartDBCluster", "rds:StopDBCluster"], Resource = "*" },
       { Effect = "Allow", Action = ["lambda:ListFunctions", "lambda:InvokeFunction"], Resource = "*" },
       { Effect = "Allow", Action = ["codebuild:ListProjects", "codebuild:BatchGetProjects", "codebuild:ListBuildsForProject", "codebuild:BatchGetBuilds", "codebuild:StartBuild"], Resource = "*" },
+      { Effect = "Allow", Action = ["cloudwatch:DescribeAlarms", "cloudwatch:GetMetricStatistics"], Resource = "*" },
+      { Effect = "Allow", Action = ["s3:ListAllMyBuckets", "s3:ListBucket"], Resource = "*" },
+      { Effect = "Allow", Action = ["ce:GetCostAndUsage"], Resource = "*" },
+      { Effect = "Allow", Action = ["ecr:DescribeRepositories", "ecr:DescribeImages"], Resource = "*" },
       { Effect = "Allow", Action = ["ssm:GetParameter", "ssm:PutParameter"], Resource = "arn:aws:ssm:${local.region}:${local.account_id}:parameter/dashboard-aws/*" }
     ]
   })
